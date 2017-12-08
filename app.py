@@ -71,6 +71,11 @@ if __name__ == '__main__':
 
     users = sys.argv[1:]
 
+    run_at = datetime.datetime.now()
+
+    store.save(storage.update_session, values={"run_at": run_at})
+    session_id = store.get_max_id(storage.update_session)
+
     for user in users:
         store.save(storage.user, key={'username': user})
         user_data = store.get(storage.user, key={'username': user})
@@ -95,4 +100,5 @@ if __name__ == '__main__':
                                "app_id": int(game['appid']),
                                "name": game['name'],
                                "last_played": last_played,
-                               "total_hours": total_hours})
+                               "total_hours": total_hours,
+                               "session_id": session_id})

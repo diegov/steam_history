@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy import Table, Column, Integer, String, Float, DateTime, MetaData
 from sqlalchemy.sql import select
 import os.path
@@ -11,13 +11,19 @@ user = Table('user', metadata,
              Column('username', String(1024), nullable=False)
 )
 
+update_session = Table('update_session', metadata,
+                       Column('id', Integer, primary_key=True),
+                       Column('run_at', DateTime, nullable=False, index=True)
+)
+
 history_entry = Table('history_entry', metadata,
                       Column('id', Integer, primary_key=True),
                       Column('user_id', Integer, nullable=False),
                       Column('app_id', Integer, nullable=False),
                       Column('name', String(1024), nullable=False),
                       Column('last_played', DateTime, nullable=True),
-                      Column('total_hours', Float, nullable=False)
+                      Column('total_hours', Float, nullable=False),
+                      Column('session_id', Integer, nullable=False)
 )
 
 class Storage(object):
@@ -50,6 +56,14 @@ class Storage(object):
                       where(self._get_key_conditions(table, key)).\
                       values(**all_values)
             return conn.execute(cmd)
+        finally:
+            conn.close()
+
+    def get_max_id(self, table):
+        conn = self.engine.connect()
+        try:
+            s = select([func.max(table.c.id)])
+            return conn.execute(s).fetchone()[0]
         finally:
             conn.close()
 
