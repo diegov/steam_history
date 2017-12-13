@@ -95,10 +95,21 @@ if __name__ == '__main__':
             else:
                 total_hours = 0.0
 
-            store.save(storage.history_entry,
-                       values={"user_id": user_id,
-                               "app_id": int(game['appid']),
-                               "name": game['name'],
-                               "last_played": last_played,
-                               "total_hours": total_hours,
-                               "session_id": session_id})
+            app_id = int(game['appid'])
+
+            existing = store.get(storage.history_entry,
+                                 key={"user_id": user_id,
+                                      "app_id": app_id,
+                                      "last_played": last_played,
+                                      "total_hours": total_hours})
+
+            values={"user_id": user_id,
+                    "app_id": app_id,
+                    "name": game['name'],
+                    "last_played": last_played,
+                    "total_hours": total_hours,
+                    "session_id": session_id}
+
+            key = {"id": existing["id"]} if existing is not None else None
+
+            store.save(storage.history_entry, values=values, key=key)
