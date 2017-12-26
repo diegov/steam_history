@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     users = sys.argv[1:]
 
-    run_at = datetime.datetime.now()
+    run_at = datetime.datetime.utcnow()
 
     store.save(storage.update_session, values={"run_at": run_at})
     session_id = store.get_max_id(storage.update_session)
