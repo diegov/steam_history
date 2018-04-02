@@ -15,6 +15,10 @@ import configparser
 import storage
 
 def parse_script(data):
+    # Hack. Fix javascript syntax issue in steam's response
+    to_replace = 'BuildGameRow(game, )'
+    replacement = 'BuildGameRow(game, 0)'
+    data = data.replace(to_replace, replacement)
     parser = Parser()
     tree = parser.parse(data)
     variables = [node for node in nodevisitor.visit(tree)
