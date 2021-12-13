@@ -10,7 +10,7 @@ cssselect==1.1.0
     # via -r requirements.in
 greenlet==1.1.0
     # via sqlalchemy
-lxml==4.6.3
+lxml==4.6.5
     # via -r requirements.in
 mako==1.1.4
     # via
