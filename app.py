@@ -1,69 +1,38 @@
 #!/usr/bin/env python3
 
-from lxml import html
+import json
 import urllib.request
-from cssselect import HTMLTranslator
-import slimit
-from slimit import ast
-from slimit.parser import Parser
-from slimit.visitors import nodevisitor
-import ast as lit_parser
+from urllib.parse import quote_plus
 import datetime
 import sys
 import configparser
 
 import storage
 
-def parse_script(data):
-    # Hack. Fix javascript syntax issue in steam's response
-    to_replace = 'BuildGameRow(game, )'
-    replacement = 'BuildGameRow(game, 0)'
-    data = data.replace(to_replace, replacement)
-    parser = Parser()
-    tree = parser.parse(data)
-    variables = [node for node in nodevisitor.visit(tree)
-                 if isinstance(node, ast.VarDecl)]
-    return variables
+def get_steam_id(username: str, api_key: str) -> str:
+    base_url = "http://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key={}&vanityurl={}"
+    url =base_url.format(quote_plus(api_key), quote_plus(username))
+    response = urllib.request.urlopen(url)
+    data = json.load(response)
+    if int(data['response']['success']) == 1:
+        return str(data['response']['steamid'])
+    else:
+        raise Exception('Failed to find steam id for user {}. {}'.format(username, data))
 
 
-def eval_literal(value):
-    if value == 'true':
-        return True
-    elif value == 'false':
-        return False
-    return lit_parser.literal_eval(value)
+def get_game_data(username: str, api_key: str):
+    steam_id = get_steam_id(username, api_key)
+    base_url = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key={}&steamid={}&include_appinfo=1&format=json"
+    url = base_url.format(quote_plus(api_key), quote_plus(steam_id))
+    response = urllib.request.urlopen(url)
+    data = json.load(response)
 
-
-def to_map(parsed_object):
-    def get_value(obj):
-        if hasattr(obj, 'value'):
-            return eval_literal(getattr(obj, 'value'))            
-        elif hasattr(obj, 'items'):
-            return [to_map(item) for item in obj.items]
-        else:
-            return to_map(obj)
-        
-    return {eval_literal(getattr(node.left, 'value', '')): get_value(node.right)
-            for node in parsed_object.properties}
-
-
-def get_game_data(username):
-    wishlist_url = 'http://steamcommunity.com/id/%s/games/?tab=all' % (username,)
-
-    response = urllib.request.urlopen(wishlist_url)
-    html_data = response.read().decode('utf-8')
-    doc = html.document_fromstring(html_data)
-    translator = HTMLTranslator()
-    row_selector = translator.css_to_xpath('script[language=javascript]')
-
-    games = None
-    for el in doc.xpath(row_selector):
-        variables = parse_script(el.text_content())
-        for variable in variables:
-            if variable.identifier.value == 'rgGames':
-                games = variable
-
-    return[to_map(item) for item in games.initializer.items]
+    return [{
+        'appid': g['appid'],
+        'name': g['name'],
+        'last_played': g.get('rtime_last_played'),
+        'hours_forever': (g.get('playtime_forever') or 0.0) / 60.0,
+    } for g in data['response']['games']]
 
 
 if __name__ == '__main__':
@@ -73,7 +42,8 @@ if __name__ == '__main__':
 
     store = storage.Storage(conn_string)
 
-    users = sys.argv[1:]
+    api_key: str = sys.argv[1]
+    users = sys.argv[2:]
 
     run_at = datetime.datetime.utcnow()
 
@@ -84,8 +54,8 @@ if __name__ == '__main__':
         store.save(storage.user, key={'username': user})
         user_data = store.get(storage.user, key={'username': user})
         user_id = user_data['id']
-        
-        game_data = get_game_data(user)
+
+        game_data = get_game_data(user, api_key)
 
         for game in game_data:
             if not 'last_played' in game:
