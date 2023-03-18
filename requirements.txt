@@ -8,7 +8,7 @@ alembic==1.8.1
     # via -r requirements.in
 greenlet==1.1.0
     # via sqlalchemy
-mako==1.1.4
+mako==1.2.2
     # via
     #   -r requirements.in
     #   alembic
