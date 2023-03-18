@@ -2,11 +2,12 @@
 
 import sys
 
-username = sys.argv[1]
+key = sys.argv[1]
+username = sys.argv[2]
 
 from app import get_game_data
 
-games = get_game_data(username)
+games = get_game_data(username, key)
 
 import csv
 

@@ -1,6 +1,7 @@
-alembic==0.9.*
-slimit==0.8.*
+alembic==1.8.*
 SQLAlchemy==1.*
-lxml==4.*
-cssselect==1.*
 Mako==1.*
+
+# Development
+types-sqlalchemy==1.*
+
