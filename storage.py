@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine, func
 from sqlalchemy import Table, Column, Integer, String, Float, DateTime, MetaData
 from sqlalchemy.sql import select
-import os.path
 import functools
 
 metadata = MetaData()
@@ -35,7 +34,7 @@ class Storage(object):
         self.engine = create_engine(self.conn_string, echo=False)
 
     def save(self, table, values=None, key=None):
-        if key is None and 'id' in values:
+        if key is None and values and 'id' in values:
             key = {'id': values['id']}
 
         conn = self.engine.connect()
@@ -63,7 +62,11 @@ class Storage(object):
         conn = self.engine.connect()
         try:
             s = select([func.max(table.c.id)])
-            return conn.execute(s).fetchone()[0]
+            result = conn.execute(s).fetchone()
+            if result:
+                return result[0]
+            else:
+                return None
         finally:
             conn.close()
 

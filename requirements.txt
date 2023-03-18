@@ -18,3 +18,5 @@ sqlalchemy==1.4.21
     # via
     #   -r requirements.in
     #   alembic
+types-sqlalchemy==1.4.53.34
+    # via -r requirements.in

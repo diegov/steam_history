@@ -9,9 +9,10 @@ import configparser
 
 import storage
 
+
 def get_steam_id(username: str, api_key: str) -> str:
     base_url = "http://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key={}&vanityurl={}"
-    url =base_url.format(quote_plus(api_key), quote_plus(username))
+    url = base_url.format(quote_plus(api_key), quote_plus(username))
     response = urllib.request.urlopen(url)
     data = json.load(response)
     if int(data['response']['success']) == 1:
@@ -53,7 +54,7 @@ if __name__ == '__main__':
     for user in users:
         store.save(storage.user, key={'username': user})
         user_data = store.get(storage.user, key={'username': user})
-        user_id = user_data['id']
+        user_id: int = user_data['id']  # type: ignore
 
         game_data = get_game_data(user, api_key)
 
