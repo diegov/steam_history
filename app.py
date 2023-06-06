@@ -34,15 +34,16 @@ def eval_literal(value):
     return lit_parser.literal_eval(value)
 
 
+def get_value(obj):
+    if hasattr(obj, 'value'):
+        return eval_literal(getattr(obj, 'value'))            
+    elif hasattr(obj, 'items'):
+        return [get_value(item) for item in obj.items]
+    else:
+        return to_map(obj)
+
+
 def to_map(parsed_object):
-    def get_value(obj):
-        if hasattr(obj, 'value'):
-            return eval_literal(getattr(obj, 'value'))            
-        elif hasattr(obj, 'items'):
-            return [to_map(item) for item in obj.items]
-        else:
-            return to_map(obj)
-        
     return {eval_literal(getattr(node.left, 'value', '')): get_value(node.right)
             for node in parsed_object.properties}
 
